@@ -1,6 +1,6 @@
 [submodule "Common"]
-    path = E:\UnityProjects\GitHub\SlipperyFloors\Common
+    path = "E:\UnityProjects\GitHub\SlipperyFloors\Common"
     url = https://github.com/zSkull162/Common
 [submodule "Utilities"]
-    path = E:\UnityProjects\GitHub\SlipperyFloors\Utilities
+    path = "E:\UnityProjects\GitHub\SlipperyFloors\Utilities"
     url = https://github.com/zSkull162/Utilities
