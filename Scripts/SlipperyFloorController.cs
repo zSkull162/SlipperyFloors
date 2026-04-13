@@ -28,7 +28,9 @@ namespace zSkull162.SlipperyFloor
         [SerializeField] private float jumpMultiplier = 1f;
         [Tooltip("A multiplier applied to the player's movement speed when jumping while in a slippery area\nA good value to keep speed consistent is 1.1, and a good value to allow players to accelerate a little is 1.25")]
         [SerializeField] private float jumpMovementMultiplier = 1.25f;
-        [Tooltip("How often (in seconds) to check if the player is grounded after leaving a slippery area, to prevent the player from getting stopped as soon as they leave the area")]
+        [Tooltip("Whether or not to wait until the player is grounded when exiting a slippery area, before disabling the slippery floor movement")]
+        [SerializeField] private bool checkForGroundedOnExit= true;
+        [Tooltip("How often (in seconds) to check if the player is grounded after leaving a slippery area")]
         [SerializeField] private float groundedCheckRate = 0.075f;
         [Tooltip("Enables logs in the console for debugging")]
         [SerializeField] private bool logs;
@@ -102,7 +104,12 @@ namespace zSkull162.SlipperyFloor
         }
         
         public void _OnTriggerExit() {
-            if (!InSlipperyArea) _DisableWhenGrounded();
+            if (InSlipperyArea) return;
+            if (!checkForGroundedOnExit) {
+                DisableIsActive();
+                return;
+            }
+            _DisableWhenGrounded();
         }
 
         public override void OnPlayerRespawn(VRCPlayerApi player) {
@@ -141,6 +148,10 @@ namespace zSkull162.SlipperyFloor
                 return;
             }
             Log(name, "[_DisableWhenGrounded] Disabling", LogColor.Blue);
+            DisableIsActive();
+        }
+        
+        private void DisableIsActive() {
             playerCollider.SetActive(false);
             Active = false;
         }

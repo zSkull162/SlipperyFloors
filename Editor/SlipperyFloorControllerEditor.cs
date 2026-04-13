@@ -16,6 +16,7 @@ namespace zSkull162.SlipperyFloor
         SerializedProperty clampMaxSpeedToRunSpeed;
         SerializedProperty jumpMultiplier;
         SerializedProperty jumpMovementMultiplier;
+        SerializedProperty checkForGroundedOnExit;
         SerializedProperty groundedCheckRate;
         SerializedProperty logs;
         
@@ -29,6 +30,7 @@ namespace zSkull162.SlipperyFloor
             clampMaxSpeedToRunSpeed = serializedObject.FindProperty("clampMaxSpeedToRunSpeed");
             jumpMultiplier = serializedObject.FindProperty("jumpMultiplier");
             jumpMovementMultiplier = serializedObject.FindProperty("jumpMovementMultiplier");
+            checkForGroundedOnExit = serializedObject.FindProperty("checkForGroundedOnExit");
             groundedCheckRate = serializedObject.FindProperty("groundedCheckRate");
             logs = serializedObject.FindProperty("logs");
             
@@ -67,7 +69,12 @@ namespace zSkull162.SlipperyFloor
             EditorGUILayout.Space();
             using (new InspectorGUI.VerticalScope(ThemeColor.Col5)) {
                 InspectorGUI.SectionLabel(ThemeColor.Col5, "Other");
-                EditorGUILayout.PropertyField(groundedCheckRate);
+                EditorGUILayout.PropertyField(checkForGroundedOnExit);
+                if (checkForGroundedOnExit.boolValue) {
+                    EditorGUI.indentLevel += 1;
+                    EditorGUILayout.PropertyField(groundedCheckRate);
+                    EditorGUI.indentLevel -= 1;
+                }
                 EditorGUILayout.PropertyField(logs);
             }
             
