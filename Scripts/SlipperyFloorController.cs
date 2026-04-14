@@ -43,7 +43,10 @@ namespace zSkull162.SlipperyFloor
 
         public bool Logs => logs;
         public bool Active {
-            set => active = value;
+            set {
+                playerCollider.SetActive(value);
+                active = value;
+            }
             get => active;
         }
         private bool InSlipperyArea {
@@ -85,7 +88,7 @@ namespace zSkull162.SlipperyFloor
             movementSpeedMultiplier /= 100f; // Dividing by 100 to make the inspector value more intuitive. eg 0.6 instead of 0.006
         }
 
-        public override void OnPlayerRestored(VRCPlayerApi player) { // Getting the jump impulse/run speed from OnPlayerRestored to be safe against race conditions
+        public override void OnPlayerRestored(VRCPlayerApi player) { // Getting the jump impulse/run speed from OnPlayerRestored to be safe against race conditions in Start
             if (!player.isLocal) return;
             jumpImpulse = Networking.LocalPlayer.GetJumpImpulse();
             if (clampMaxSpeedToRunSpeed) maxSpeed = Networking.LocalPlayer.GetRunSpeed();
@@ -94,19 +97,32 @@ namespace zSkull162.SlipperyFloor
             if (maxSpeed <= 0f) maxSpeed = 999f; // If the max speed is zero, set it high to act like there's no max speed
         }
 
+        void OnDisable() {
+            string content =
+                "WARNING - This system is not meant to be disabled at runtime, and may not work as-intended if you do. " +
+                "If you want to disable it, toggle the trigger objects or modify the Active property through Udon instead. ";
+            #if UNITY_EDITOR
+            content += "\n<b><size=12>If you are seeing this in-editor after exiting playmode, you can ignore this warning.</size></b>";
+            #endif
+            zLogger.LogWarning(name, content);
+        }
 
         #region Input Events
+        /// <summary>Input method, only meant to be called by a trigger script when a player enters the trigger.
+        /// Moves the player collider to the same position as the player, and enables the system.</summary>
         public void _OnTriggerEnter() {
             if (Active) return;
-            playerCollider.SetActive(true);
             ColliderToPlayer();
             Active = true;
         }
         
+        /// <summary>Input method, only meant to be called by a trigger script when a player exits the trigger.
+        /// Returns if the player in inside a slippery area, or if the system is already disabled.
+        /// If Check For Grounded On Exit is disabled, immediately disables the system. Otherwise, waits for the player to be grounded before disabling the system.</summary>
         public void _OnTriggerExit() {
-            if (InSlipperyArea) return;
+            if (InSlipperyArea || !Active) return;
             if (!checkForGroundedOnExit) {
-                DisableIsActive();
+                Active = false;
                 return;
             }
             _DisableWhenGrounded();
@@ -114,15 +130,12 @@ namespace zSkull162.SlipperyFloor
 
         public override void OnPlayerRespawn(VRCPlayerApi player) {
             if (!player.isLocal) return;
-            Log(name, "[OnPlayerRespawn] Respawn detected", LogColor.LightBlue);
-            
-            if (InSlipperyArea) return;
-            playerCollider.SetActive(false);
+            Log(name, $"[OnPlayerRespawn] Respawn detected", LogColor.LightBlue);
             Active = false;
         }
 
         public override void InputJump(bool value, UdonInputEventArgs args) {
-            if (!Active || !value || jumpImpulse <= 0f || !IsGrounded || !InSlipperyArea) return;
+            if (!active || !value || jumpImpulse <= 0f || !IsGrounded || !InSlipperyArea) return;
             Log(name, $"[InputJump] Detected", LogColor.LightBlue);
             
             colliderRB.velocity = new Vector3(
@@ -133,6 +146,7 @@ namespace zSkull162.SlipperyFloor
         }
         #endregion
 
+        #region Private/Internal Methods
         private void ColliderToPlayer() {
             if (!InSlipperyArea) return;
             Log(name, $"[ColliderToPlayer] Moving collider from {playerCollider.transform.position} to {PlayerPos}", LogColor.Blue);
@@ -141,6 +155,8 @@ namespace zSkull162.SlipperyFloor
             colliderRB.velocity = PlayerVelocity;
         }
         
+        /// <summary>Internal method, not meant to be called outside of the controller.
+        /// Called by _OnTriggerExit, runs a loop checking if the player is grounded or not, before disabling the system.</summary>
         public void _DisableWhenGrounded() {
             if (!IsGrounded) {
                 Log(name, "[_DisableWhenGrounded] Waiting...", LogColor.Blue);
@@ -148,17 +164,19 @@ namespace zSkull162.SlipperyFloor
                 return;
             }
             Log(name, "[_DisableWhenGrounded] Disabling", LogColor.Blue);
-            DisableIsActive();
-        }
-        
-        private void DisableIsActive() {
-            playerCollider.SetActive(false);
             Active = false;
         }
+        
+        /// <summary>Internal method, not meant to be called outside of the controller.
+        /// Called by OnPlayerRespawn, checks if the player is not in a slippery area before disabling the system.</summary>
+        public void _DisableAfterRespawn() {
+            if (!InSlipperyArea) Active = false;
+        }
+        #endregion
 
         #region Movement Logic
         void FixedUpdate() {
-            if (!Active) return;
+            if (!active) return;
             
             if (colliderRB.velocity.magnitude <= maxSpeed) colliderRB.velocity = PlayerVelocity * movementSpeedMultiplier + colliderRB.velocity;
             StableTeleportTo(playerCollider.transform.position);

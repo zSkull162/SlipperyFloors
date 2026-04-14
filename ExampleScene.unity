@@ -677,6 +677,7 @@ MonoBehaviour:
   useAssignedLayers: 0
   DynamicPrefabs: []
   DynamicMaterials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 2100000, guid: 2dd42a50e9aa7814fa8f731b33863414, type: 2}
   - {fileID: 2100000, guid: 14c2bd85cab19c94fbd3e95a02c0e538, type: 2}
   - {fileID: 2100000, guid: f6727944dc6ad99409dc9246dd3da936, type: 2}
@@ -744,6 +745,10 @@ MonoBehaviour:
     SerializedTypeNames: []
   - gameObject: {fileID: 845102928}
     ID: 16
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 0}
+    ID: 17
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
   portraitCameraPositionOffset: {x: 0, y: 0, z: 0}
